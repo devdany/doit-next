@@ -18,11 +18,13 @@ jobs:
         with:
           node-version: '14'
 
-      - name: add dependency
-        run: npm install
-
-      - name: react build
-        run: npm run build
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: install
+       
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: build
       
       - name: Deploy react to S3
         uses: jakejarvis/s3-sync-action@master
