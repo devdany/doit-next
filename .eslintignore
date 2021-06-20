@@ -1,0 +1,9 @@
+**/node_modules/*
+**/out/*
+**/.next/*
+.babelrc
+**/*.test.tsx
+**/*.stories.tsx
+types/graphql.ts
+tests
+components/base/*
