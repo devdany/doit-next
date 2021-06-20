@@ -51,16 +51,16 @@ export default function SwapIntro() {
   const router = useRouter();
   return (
     <IntroBox>
-          <IntroTitle>DOIT SWAP</IntroTitle>
-          <IntroContent>
-            The safe, fast and most secure way to bring Ethereum-chain assets to Binance chains.
-          </IntroContent>
-          <IntroContent>
-            Start Convert ERC-20 to BEP-20
-          </IntroContent>
-          <LinkText onClick={() => router.push('/dashboard')} style={{ marginTop: '36px' }}>DashBoard</LinkText>
-          <LinkText>UserGuide</LinkText>
-          <ConinPeopleImage src={CoinPeople} />
-        </IntroBox>
+      <IntroTitle>DOIT SWAP</IntroTitle>
+      <IntroContent>
+        The safe, fast and most secure way to bring Ethereum-chain assets to Binance chains.
+      </IntroContent>
+      <IntroContent>
+        Start Convert ERC-20 to BEP-20
+      </IntroContent>
+      <LinkText onClick={() => router.push('/dashboard')} style={{ marginTop: '36px' }}>DashBoard</LinkText>
+      <LinkText>UserGuide</LinkText>
+      <ConinPeopleImage src={CoinPeople} />
+    </IntroBox>
   )
 }

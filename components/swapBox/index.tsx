@@ -12,7 +12,7 @@ const Container = styled.div`
   flex: 0 0 540px;
   margin-left: 12px;
   overflow-y: auto;
-  height: 600px;
+  height: 780px;
   
   background-color: #ffffff;
   padding-left: 48px;

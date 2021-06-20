@@ -14,7 +14,7 @@ const Container = styled.div`
 export default function SwapHistory({ histories }: Props) {
   return (
     <Container>
-      {histories.map((history) => <SwapHistoryRow history={history} />)}
+      {histories.map((history) => <SwapHistoryRow key={`history-${history.id}`} history={history} />)}
     </Container>
   );
 }
