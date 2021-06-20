@@ -11,7 +11,6 @@ const Container = styled.div`
   flex: 0 0 358px;
 `;
 
-
 export default function SwapHistory({ histories }: Props) {
   return (
     <Container>
