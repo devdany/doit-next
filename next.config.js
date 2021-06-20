@@ -8,10 +8,6 @@ module.exports = withImages({
   ignoreBuildErrors: true,
   webpack: (config) => {
     config.plugins.push(new Dotenv({ silent: true }));
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ["@svgr/webpack"]
-    });
     return config;
   },
 });
