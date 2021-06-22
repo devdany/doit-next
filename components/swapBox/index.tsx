@@ -6,6 +6,7 @@ import BinIcon from 'assets/icons/binance.svg';
 import Button from 'components/button';
 import Dropdown, { Option } from 'react-dropdown';
 import 'react-dropdown/style.css';
+import theme from 'theme';
 
 const Container = styled.div`
   display: flex;
@@ -172,8 +173,13 @@ const AssetsSample = [
   }
 ]
 
+type Props = {
+  isConnected: boolean
+  balance: number
+  connect: () => void
+}
 
-export default function SwapBox() {
+export default function SwapBox({ isConnected, balance, connect }: Props) {
   const [swapAmount, setSwapAmount] = useState(0);
   const [asset, setAsset] = useState<Option>(AssetsSample[0]);
 
@@ -196,9 +202,6 @@ export default function SwapBox() {
     <Container>
       <Lable>Asset</Lable>
       <Dropdown options={AssetsSample} onChange={handleChangeAsset} value={asset}/>
-      {/* <AssetList>
-        <AssetName>DOIT</AssetName>
-      </AssetList> */}
       <SwapContentContainer>
         <SwapContent>
           <SwapContentLable>From</SwapContentLable>
@@ -223,7 +226,12 @@ export default function SwapBox() {
         </SwapContent>
       </SwapContentContainer>
       <Lable>{asset.value} Balance</Lable>
-      <Input style={{ backgroundColor: '#fafafa' }} disabled value='2314.54 DOIT' />
+      {isConnected ? (
+        <Input style={{ backgroundColor: '#fafafa' }} disabled value={`${balance} ${asset.value}`} />
+      ) : (
+          <Button style={{width: '180px', flex: '0 0 42px', backgroundColor: theme.color.sub}} onClick={() => connect()}>Connect Wallet</Button>
+      )}
+      
       <Lable>Swap Amount</Lable>
       <Input value={swapAmount} onChange={handleChangeSwapAmount}/>
       <AdditionalText>Estimated fee {(swapAmount / 10)} DOIT</AdditionalText>
