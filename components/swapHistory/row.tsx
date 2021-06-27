@@ -7,20 +7,11 @@ import MuiAccordionDetails from '@material-ui/core/AccordionDetails';
 import RightArrow from 'assets/icons/rightArrow.svg';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { capitalizeFirstLetter, makeShortAddress } from 'utils/stringUtil'
-
-export type History = {
-  id: number
-  from: string
-  to: string
-  status: 'fail' | 'pending' | 'success'
-  date: string
-  transaction: string
-  amount: number
-}
-
+import { dateToFormatted } from 'utils/dateFormat'
+import { SwapHistory, SwapResult } from 'types/graphql'
 
 type Props = {
-  history: History
+  history: SwapHistory
 }
 
 const Accordion = withStyles({
@@ -166,20 +157,28 @@ export default function SwapHistoryRow({ history }: Props) {
     setExpanded(newExpanded ? panelId : false);
   };
 
+  let status: 'pending' | 'success' | 'fail' = 'pending'
+
+  if (history.result === SwapResult.Success) {
+    status = 'success'
+  } else if (history.result === SwapResult.Fail) {
+    status = 'fail'
+  }
+
   return (
     <Accordion square expanded={expanded === history.id} onChange={handleChange(history.id)}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1d-content" id="panel1d-header">
         <Container>
           <TitleText>
-            {history.from}
+            {history.from.name}
             <Icon src={RightArrow} />
-            {history.to}
-            <StatusBadge status={history.status}>
-              {capitalizeFirstLetter(history.status)}
+            {history.to.name}
+            <StatusBadge status={status}>
+              {capitalizeFirstLetter(status)}
             </StatusBadge>
           </TitleText>
           <TitleText style={{ fontWeight: 400 }}>
-            {`+ ${history.amount} ${typeof window !== 'undefined' && window.innerWidth > 1023 ? history.to : ''}`}
+            {`+ ${history.amount} ${typeof window !== 'undefined' && window.innerWidth > 1023 ? history.to.name : ''}`}
           </TitleText>
         </Container>
       </AccordionSummary>
@@ -191,7 +190,7 @@ export default function SwapHistoryRow({ history }: Props) {
           </DetailTitleBox>
           <DetailValueBox>
             <DetailValue>{makeShortAddress(history.transaction)}</DetailValue>
-            <DetailValue style={{ marginTop: '8px' }}>{history.date}</DetailValue>
+            <DetailValue style={{ marginTop: '8px' }}>{dateToFormatted(new Date(history.createdAt))}</DetailValue>
           </DetailValueBox>
         </DetailContainer>
       </AccordionDetails>

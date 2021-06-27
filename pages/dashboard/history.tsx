@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import theme from 'theme';
 import Header from 'components/header';
@@ -6,8 +6,11 @@ import MetaMaskIcon from 'assets/images/metamask.png';
 import External from 'assets/icons/external.svg';
 import Dropdown, { Option } from 'react-dropdown';
 import SwapHistory from 'components/swapHistory';
-import { History } from 'components/swapHistory/row'
 import { makeShortAddress } from 'utils/stringUtil';
+import { useWallet } from 'contexts/wallet';
+import { useQuery, gql } from '@apollo/client';
+import { Query, QuerySwapHistoriesArgs, Token, QueryTokenBalanceArgs } from 'types/graphql'
+import { useMetaMask } from 'metamask-react';
 
 import 'react-dropdown/style.css';
 
@@ -95,17 +98,6 @@ const Label = styled.div`
   font-size: 18px;
 `;
 
-const AssetsSample = [
-  {
-    label: 'BDOIT',
-    value: 'BDOIT',
-  },
-  {
-    label: 'BABCD',
-    value: 'BABCD'
-  }
-]
-
 const BalanceText = styled.div`
   font-size: 22px;
   font-weight: 500;
@@ -132,77 +124,123 @@ const AdditionalText = styled.div`
   cursor: pointer;
 `;
 
-const sampleHistory: History[] = [
-  {
-    id: 1,
-    from: 'DOIT',
-    to: 'BDOIT',
-    status: 'success',
-    date: '2021-11-11',
-    transaction: '0x97d71257fa79947d1c9c0b48afc39a6db3beeb07eeb5a4d537f622b3022e4c74',
-    amount: 3500
-  },
-  {
-    id: 2,
-    from: 'DOIT',
-    to: 'BDOIT',
-    status: 'fail',
-    date: '2021-11-11',
-    transaction: '0x97d71257fa79947d1c9c0b48afc39a6db3beeb07eeb5a4d537f622b3022e4c74',
-    amount: 3500
-  },
-  {
-    id: 3,
-    from: 'DOIT',
-    to: 'BDOIT',
-    status: 'pending',
-    date: '2021-11-11',
-    transaction: '0x97d71257fa79947d1c9c0b48afc39a6db3beeb07eeb5a4d537f622b3022e4c74',
-    amount: 3500
-  },{
-    id: 4,
-    from: 'DOIT',
-    to: 'BDOIT',
-    status: 'success',
-    date: '2021-11-11',
-    transaction: '0x97d71257fa79947d1c9c0b48afc39a6db3beeb07eeb5a4d537f622b3022e4c74',
-    amount: 3500
-  },
-  {
-    id: 5,
-    from: 'DOIT',
-    to: 'BDOIT',
-    status: 'success',
-    date: '2021-11-11',
-    transaction: '0x97d71257fa79947d1c9c0b48afc39a6db3beeb07eeb5a4d537f622b3022e4c74',
-    amount: 3500
-  },
-  {
-    id: 6,
-    from: 'DOIT',
-    to: 'BDOIT',
-    status: 'success',
-    date: '2021-11-11',
-    transaction: '0x97d71257fa79947d1c9c0b48afc39a6db3beeb07eeb5a4d537f622b3022e4c74',
-    amount: 3500
-  },
-  {
-    id: 7,
-    from: 'DOIT',
-    to: 'BDOIT',
-    status: 'success',
-    date: '2021-11-11',
-    transaction: '0x97d71257fa79947d1c9c0b48afc39a6db3beeb07eeb5a4d537f622b3022e4c74',
-    amount: 3500
+const IS_ABLE_TO_BE_SWAPED_TOKENS = gql`
+  query {
+    isAbleToBeSwapedTokens {
+      id
+      name
+      address
+      abi
+      decimal
+      network
+      isAbleToBeSwapped {
+        id
+        name
+        address
+        network
+      }
+    }
   }
-]
+`;
 
-export default function Dashboard() {
-  const [asset, setAsset] = useState<Option>(AssetsSample[0]);
+const HISTORIES = gql`
+  query swapHistories($userWalletId: Float!) {
+    swapHistories(userWalletId: $userWalletId) {
+      id
+      transaction
+      amount
+      createdAt
+      from {
+        id
+        name
+        address
+        abi
+        decimal
+        network
+      }
+      to {
+        id
+        name
+        address
+        abi
+        decimal
+        network
+      }
+      result
+    }
+  }
+`;
+
+const TOKEN_BALANCE = gql`
+  query tokenBalance($tokenId: Float!, $address: String!) {
+    tokenBalance(tokenId: $tokenId, address: $address) {
+      userWallet {
+        address
+      }
+      token {
+        id
+        name
+        address
+        abi
+        decimal
+        network
+      }
+      balance
+    }
+  }
+`;
+
+export default function HistoryPage() {
+  if (typeof window === 'undefined') {
+    return <></>
+  }
+  const [asset, setAsset] = useState<Option>({ label: '', value: '' });
+  const { status, account } = useMetaMask();
+  const [ selectedToken, setSelectedToken ] = useState<Token | null>(null)
+  const { connectedWallet } = useWallet()
+  const isAbleToBeSwapedToken = useQuery<Query>(IS_ABLE_TO_BE_SWAPED_TOKENS)
+  const { data, loading } = useQuery<Query, QuerySwapHistoriesArgs>(HISTORIES, {
+    variables: {
+      userWalletId: connectedWallet?.id
+    },
+    skip: connectedWallet === null
+  })
+
+  const tokenBalanceResult = useQuery<Query, QueryTokenBalanceArgs>(TOKEN_BALANCE, {
+    skip: status !== 'connected' || connectedWallet?.address !== account || selectedToken === null,
+    variables: {
+      tokenId: selectedToken?.id,
+      address: connectedWallet?.address
+    }
+  })
+
+  const tokensToOptions = (tokens: Token[]): Option[] => {
+    if (!tokens) {
+      return []
+    }
+    return tokens.map((token) => ({ label: token.name, value: token.name }))
+  }
 
   const handleChange = (value: Option) => {
-    setAsset(value)
+    if (isAbleToBeSwapedToken && isAbleToBeSwapedToken?.data) {
+      const token = isAbleToBeSwapedToken?.data?.isAbleToBeSwapedTokens.find((token) => token.name === value.value)
+      setSelectedToken(token)
+      setAsset(value)
+    }
   }
+
+  useEffect(() => {
+    if (isAbleToBeSwapedToken?.data) {
+      const tokens = isAbleToBeSwapedToken.data.isAbleToBeSwapedTokens
+      const firstToken = tokens[0];
+      setAsset({
+        label: firstToken.name,
+        value: firstToken.name
+      })
+      setSelectedToken(firstToken)
+    }
+  }, [isAbleToBeSwapedToken])
+
   return (
     <Container>
       <Header />
@@ -210,7 +248,7 @@ export default function Dashboard() {
         <WalletInfoBox>
           <WalletInfo>
             <Icon src={MetaMaskIcon} />
-            <WalletAddressText>{makeShortAddress('0x45c49d7be5f14a4cdde91a8e8b1f70cd5fcdf177')}</WalletAddressText>
+            <WalletAddressText>{makeShortAddress(connectedWallet ? connectedWallet.address : '')}</WalletAddressText>
           </WalletInfo>
         </WalletInfoBox>
         <Label>
@@ -218,9 +256,9 @@ export default function Dashboard() {
         </Label>
         <BinanceBalanceBox>
           <AssetBox>
-            <Dropdown options={AssetsSample} value={asset} onChange={handleChange} />
+            <Dropdown options={tokensToOptions(isAbleToBeSwapedToken?.data?.isAbleToBeSwapedTokens)} value={asset} onChange={handleChange} />
           </AssetBox>
-          <BalanceText>650,000</BalanceText>
+          <BalanceText>{tokenBalanceResult?.data?.tokenBalance ? tokenBalanceResult?.data?.tokenBalance.balance.toLocaleString() : 0}</BalanceText>
         </BinanceBalanceBox>
         <Divider />
         <HistoryTitleBox>
@@ -230,7 +268,7 @@ export default function Dashboard() {
             View on BscScan
           </AdditionalText>
         </HistoryTitleBox>
-        <SwapHistory histories={sampleHistory} />
+        <SwapHistory loading={loading} histories={data ? data.swapHistories : []} />
       </Body>
     </Container>
   )

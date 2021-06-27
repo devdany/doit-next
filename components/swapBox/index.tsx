@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components';
 import RightArrowIcon from 'assets/icons/rightArrow.svg';
 import EthIcon from 'assets/icons/ethereum.svg';
@@ -7,6 +7,10 @@ import Button from 'components/button';
 import Dropdown, { Option } from 'react-dropdown';
 import 'react-dropdown/style.css';
 import theme from 'theme';
+import { Token, UserWallet } from 'types/graphql'
+import { HashLoader } from 'react-spinners';
+import { gql, useMutation } from '@apollo/client';
+import { Mutation, MutationSwapTokenArgs } from 'types/graphql'
 
 const Container = styled.div`
   display: flex;
@@ -31,7 +35,24 @@ const Container = styled.div`
     padding-right: 24px;
     height: auto;
   }
+`;
 
+const SpinnerContainer = styled.div`
+  display: flex;
+  flex: 0 0 540px;
+  height: 780px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-left: 12px;
+
+  @media (max-width: 1024px) {
+    flex: 0 0 340px;
+    margin-left: 0px;
+    margin-top: 24px;
+    height: 540;
+  }
 `;
 
 const Lable = styled.div`
@@ -84,7 +105,6 @@ const ContentText = styled.div`
   margin-left: 8px;
   font-size: 12px;
   display: flex;
-  justify-content: center;
   align-items: center;
   flex: 0 0 110px;
 
@@ -162,32 +182,116 @@ const ButtonBox = styled.div`
   align-items: center;
 `;
 
-const AssetsSample = [
-  {
-    label: 'DOIT',
-    value: 'DOIT',
-  },
-  {
-    label: 'ABCD',
-    value: 'ABCD'
-  }
-]
-
 type Props = {
-  isConnected: boolean
+  userWallet?: UserWallet
+  metamaskStatus: 'initializing' | 'unavailable' | 'notConnected' | 'connected' | 'connecting'
   balance: number
+  tokens?: Token[]
+  tokenLoading: boolean
   connect: () => void
+  selectToken: (token: Token) => void
 }
 
-export default function SwapBox({ isConnected, balance, connect }: Props) {
+const tokensToOptions = (tokens: Token[]): Option[] => tokens.map((token) => ({ label: token.name, value: token.name }))
+
+const SWAP_TOKEN = gql`
+  mutation swapToken($address: String!, $amount: Float!, $toTokenId: Float!, $fromTokenId: Float!) {
+    swapToken(address: $address, amount: $amount, toTokenId: $toTokenId, fromTokenId: $fromTokenId) {
+      id
+      transaction
+      amount
+      createdAt
+      from {
+        id
+        name
+        address
+        abi
+        decimal
+        network
+      }
+      to {
+        id
+        name
+        address
+        abi
+        decimal
+        network
+      }
+      result
+    }
+  }
+`;
+
+export default function SwapBox({ balance, connect, tokenLoading, tokens, metamaskStatus, selectToken, userWallet }: Props) {
+  if (!tokens) {
+    return (
+      <SpinnerContainer>
+        <HashLoader color={theme.color.sub} />
+      </SpinnerContainer>
+    )
+  }
   const [swapAmount, setSwapAmount] = useState(0);
-  const [asset, setAsset] = useState<Option>(AssetsSample[0]);
+  const tokenOptions = tokensToOptions(tokens);
+  const [asset, setAsset] = useState<Option>({ label: '', value: '' });
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null)
+  const [swapToken] = useMutation<Mutation, MutationSwapTokenArgs>(SWAP_TOKEN, {
+    update(cache, { data: { swapToken } }) {
+      cache.modify({
+        fields: {
+          swapHistories(exsistingHistories = []) {
+            const histories = cache.writeFragment({
+              data: swapToken,
+              fragment: gql`
+                fragment NewHistory on History {
+                  id
+                  transaction
+                  amount
+                  createdAt
+                  from {
+                    id
+                    name
+                    address
+                    abi
+                    decimal
+                    network
+                  }
+                  to {
+                    id
+                    name
+                    address
+                    abi
+                    decimal
+                    network
+                  }
+                  result
+                }
+              `,
+            });
+            return [histories, ...exsistingHistories];
+          },
+        },
+      });
+    },
+  })
+
+  useEffect(() => {
+    if (tokens.length > 0) {
+      const firstToken = tokens[0];
+      setAsset({
+        label: firstToken.name,
+        value: firstToken.name
+      })
+      selectToken(firstToken)
+
+      setSelectedToken(firstToken);
+    }
+  }, [tokens])
 
   const handleChangeSwapAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-
-    if (inputValue.match(/^\d+$/)) {
-      setSwapAmount(Number(e.target.value));
+    const castedValue= Number(e.target.value)
+    if (inputValue.match(/^\d+$/) && castedValue <= balance) {
+      setSwapAmount(castedValue);
     }
 
     if (inputValue.length === 0) {
@@ -197,51 +301,93 @@ export default function SwapBox({ isConnected, balance, connect }: Props) {
 
   const handleChangeAsset = (value: Option) => {
     setAsset(value);
+    const token = tokens.find((token) => token.name === value.value)
+    setSelectedToken(token)
+    selectToken(token)
   }
+
+  let buttonStatus: 'active' | 'inactive' | 'loading' = 'active'
+
+  if (metamaskStatus === 'initializing' || metamaskStatus === 'connecting') {
+    buttonStatus = 'loading'
+  } else if (metamaskStatus === 'unavailable') {
+    buttonStatus = 'inactive'
+  }
+
+  const isPossibleSwap = () => selectedToken && selectedToken.swapables && selectedToken.swapables.length > 0 && metamaskStatus === 'connected' && userWallet ? true: false
+  const handleClickSwap = () => {
+    if (isPossibleSwap()) {
+      swapToken({
+        variables: {
+          fromTokenId: selectedToken.id,
+          toTokenId: selectedToken.swapables[0].id,
+          address: userWallet.address,
+          amount: swapAmount
+        }
+      })
+        .then(() => {
+          alert('Swap is pending..')
+        })
+    }
+  }
+
   return (
-    <Container>
-      <Lable>Asset</Lable>
-      <Dropdown options={AssetsSample} onChange={handleChangeAsset} value={asset}/>
-      <SwapContentContainer>
-        <SwapContent>
-          <SwapContentLable>From</SwapContentLable>
-          <SwapContentBox>
-            <ContentGroup>
-              <CoinIcon src={EthIcon} />
-              <ContentText>Ethereum Network</ContentText>
-            </ContentGroup>
-          </SwapContentBox>
-        </SwapContent>
-        <SwapArrow>
-          <Icon src={RightArrowIcon} />
-        </SwapArrow>
-        <SwapContent>
-          <SwapContentLable>To</SwapContentLable>
-          <SwapContentBox>
-            <ContentGroup>
-              <CoinIcon src={BinIcon} />
-              <ContentText>Binance Smart Chain Network</ContentText>
-            </ContentGroup>
-          </SwapContentBox>
-        </SwapContent>
-      </SwapContentContainer>
-      <Lable>{asset.value} Balance</Lable>
-      {isConnected ? (
-        <Input style={{ backgroundColor: '#fafafa' }} disabled value={`${balance} ${asset.value}`} />
-      ) : (
-          <Button style={{width: '180px', flex: '0 0 42px', backgroundColor: theme.color.sub}} onClick={() => connect()}>Connect Wallet</Button>
-      )}
-      
-      <Lable>Swap Amount</Lable>
-      <Input value={swapAmount} onChange={handleChangeSwapAmount}/>
-      <AdditionalText>Estimated fee {(swapAmount / 10)} DOIT</AdditionalText>
-      <TotalBox>
-        <TotalLable>Total Received</TotalLable>
-        <TotalText>{swapAmount - (swapAmount / 10)} BDOIT</TotalText>
-      </TotalBox>
-      <ButtonBox>
-        <Button style={{ flex: '0 0 120px' }}>Swap</Button>
-      </ButtonBox>
-    </Container>
+    tokenLoading ? (
+      <SpinnerContainer>
+        <HashLoader color={theme.color.sub} />
+      </SpinnerContainer>
+    ) : (
+      <Container>
+        <Lable>Asset</Lable>
+        <Dropdown options={tokenOptions} onChange={handleChangeAsset} value={asset}/>
+        <SwapContentContainer>
+          <SwapContent>
+            <SwapContentLable>From</SwapContentLable>
+            <SwapContentBox>
+              <ContentGroup>
+                <CoinIcon src={EthIcon} />
+                <ContentText>{selectedToken?.network} Network</ContentText>
+              </ContentGroup>
+            </SwapContentBox>
+          </SwapContent>
+          <SwapArrow>
+            <Icon src={RightArrowIcon} />
+          </SwapArrow>
+          <SwapContent>
+            <SwapContentLable>To</SwapContentLable>
+            <SwapContentBox>
+              <ContentGroup>
+                <CoinIcon src={BinIcon} />
+                <ContentText>{selectedToken?.swapables[0].network} Network</ContentText>
+              </ContentGroup>
+            </SwapContentBox>
+          </SwapContent>
+        </SwapContentContainer>
+        <Lable>{selectedToken?.name} Balance</Lable>
+        {metamaskStatus === 'connected' ? (
+          <Input style={{ backgroundColor: '#fafafa' }} disabled value={`${balance.toLocaleString()} ${asset.value}`} />
+        ) : (
+            <Button
+              activeStatus={buttonStatus}
+              inactiveMessage='Please setup the metamask!'
+              style={{width: '180px', flex: '0 0 42px', backgroundColor: theme.color.sub}}
+              onClick={() => connect()}>
+                Connect Wallet
+              </Button>
+        )}
+        
+        <Lable>Swap Amount</Lable>
+        <Input value={swapAmount} onChange={handleChangeSwapAmount}/>
+        <AdditionalText>Estimated fee {(swapAmount / 10).toLocaleString()} {selectedToken?.name}</AdditionalText>
+        <TotalBox>
+          <TotalLable>Total Received</TotalLable>
+          <TotalText>{(swapAmount - (swapAmount / 10)).toLocaleString()} {selectedToken?.swapables[0].name}</TotalText>
+        </TotalBox>
+        <ButtonBox>
+          <Button activeStatus={isPossibleSwap() ? 'active' : 'inactive'} onClick={handleClickSwap} style={{ flex: '0 0 120px' }}>Swap</Button>
+        </ButtonBox>
+      </Container>
+    )
+    
   )
 }

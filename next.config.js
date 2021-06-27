@@ -3,7 +3,8 @@ const Dotenv = require('dotenv-webpack');
 
 module.exports = withImages({
   env: {
-    API_BASE_URL: process.env.API_BASE_URL,
+    GRAPHQL_WEBSOCKET_URL: process.env.GRAPHQL_WEBSOCKET_URL,
+    GRAPHQL_URL: process.env.GRAPHQL_URL
   },
   ignoreBuildErrors: true,
   webpack: (config) => {

@@ -13,9 +13,3 @@ declare module '*.png' {
   export default content;
 }
 
-declare module 'use-metamask' {
-  const content: any;
-  export const MetamaskStateProvider
-  export const useMetamask
-  export default content;
-}

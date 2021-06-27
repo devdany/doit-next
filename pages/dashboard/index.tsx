@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import Header from 'components/header';
 import Button from 'components/button';
-import MetamaskConnector from 'components/metamaskConnector';
 import theme from 'theme';
+import { useMetaMask } from 'metamask-react';
+import { useRouter } from 'next/router'
+import { useWallet } from 'contexts/wallet'
 
 const Container = styled.div`
   display: flex;
@@ -36,29 +38,46 @@ const Notice = styled.div`
 `;
 
 export default function Dashboard() {
-  const [isOpenMetaMaskConnector, setOpenMetaMaskConnector] = useState(false);
+  if (typeof window === 'undefined') {
+    return <></>
+  }
+
+  const { status, connect } = useMetaMask();
+  const router = useRouter();
+  const { connectedWallet } = useWallet()
+
+  useEffect(() => {
+    if (connectedWallet) {
+      router.push('/dashboard/history')
+    }
+  }, [connectedWallet])
+
+  let buttonStatus: 'active' | 'inactive' | 'loading' = 'active'
+
+  if (status === 'initializing' || status === 'connecting') {
+    buttonStatus = 'loading'
+  } else if (status === 'unavailable') {
+    buttonStatus = 'inactive'
+  }
+
   return (
     <Container>
       <Header />
       <Body>
-        {isOpenMetaMaskConnector ? (
-          <MetamaskConnector close={() => setOpenMetaMaskConnector(false)}/>
-        ): (
-          <>
-            <Notice>
-            Check volume swapped to Binance and transaction history
-            </Notice>
-            <Button
-              style={{
-                width: '240px',
-                flex: '0 0 48px'
-              }}
-              onClick={() => setOpenMetaMaskConnector(!isOpenMetaMaskConnector)}
-            >
-              Connect Wallet
-            </Button>
-          </>
-        )}
+        <Notice>
+          Check volume swapped to Binance and transaction history
+        </Notice>
+        <Button
+          inactiveMessage='Please setup the metamask!'
+          activeStatus={buttonStatus}
+          style={{
+            width: '240px',
+            flex: '0 0 48px'
+          }}
+          onClick={() => connect()}
+        >
+          Connect Wallet
+        </Button>
       </Body>
     </Container>
   );

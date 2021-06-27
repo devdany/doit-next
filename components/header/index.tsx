@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useRouter } from 'next/router'
 
 const Container = styled.div`
   width: 100%;
@@ -18,13 +19,16 @@ const LogoBox = styled.div`
   font-size: 24px;
   color: white;
   font-weight: bold;
+  cursor: pointer;
 `;
 
 
 export default function Header() {
+  const router = useRouter();
+
   return (
     <Container>
-      <LogoBox>
+      <LogoBox onClick={() => router.push('/')}>
         DOIT SWAP
       </LogoBox>
     </Container>

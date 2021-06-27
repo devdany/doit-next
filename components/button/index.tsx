@@ -1,11 +1,14 @@
 import React from 'react'
 import styled from 'styled-components';
 import theme from 'theme';
+import { BeatLoader } from 'react-spinners'
 
 type Props = {
   children: React.ReactNode
   style?: React.CSSProperties
-  onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void
+  onClick?: (e: any) => void
+  activeStatus?: 'active' | 'inactive' | 'loading'
+  inactiveMessage?: string
 }
 
 const Container = styled.div`
@@ -21,10 +24,30 @@ const Container = styled.div`
   border-radius: 8px;
 `;
 
-export default function Button({ children, onClick, style }: Props) {
+export default function Button({ children, onClick, style, activeStatus = 'active', inactiveMessage = 'This button is inactive!' }: Props) {
+  const handleClick = (e: any) => {
+    if (activeStatus === 'active' && onClick) {
+      onClick(e)
+    } else if (activeStatus === 'inactive') {
+      alert(inactiveMessage)
+    }
+  }
+
+  const handledStyle = {
+    ...style
+  }
+
+  if (activeStatus === 'inactive') {
+    handledStyle.backgroundColor = '#ddd'
+    handledStyle.cursor = 'not-allowed'
+  }
   return (
-    <Container style={style} onClick={onClick}>
-      {children}
+    <Container style={handledStyle} onClick={handleClick}>
+      {activeStatus === 'loading' ? (
+        <BeatLoader color='#ffffff' />
+      ) : (
+        children
+      )}
     </Container>
   )
 }
