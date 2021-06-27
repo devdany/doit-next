@@ -7,7 +7,7 @@ on:
 
 env:
   GRAPHQL_URL: 'https://api.doitswap.com/graphql'
-  GRAPHQL_WEBSOCKET_URL: 'ws://api.doitswap.com/subscriptions'
+  GRAPHQL_WEBSOCKET_URL: 'wss://api.doitswap.com/subscriptions'
 
 jobs:
   build:
