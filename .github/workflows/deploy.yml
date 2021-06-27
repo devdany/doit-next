@@ -6,8 +6,8 @@ on:
       - main
 
 env:
-  GRAPHQL_URL: 'http://localhost:4000/graphql'
-  GRAPHQL_WEBSOCKET_URL: 'ws://localhost:4000/subscriptions'
+  GRAPHQL_URL: 'http://34.204.198.164/graphql'
+  GRAPHQL_WEBSOCKET_URL: 'ws://34.204.198.164/subscriptions'
 
 jobs:
   build:
