@@ -4,7 +4,7 @@ import theme from 'theme';
 import SwapIntro from 'components/swapIntro';
 import SwapBox from 'components/swapBox';
 import { useMetaMask } from 'metamask-react';
-import { useQuery,  gql } from '@apollo/client'
+import { useQuery, gql, useLazyQuery } from '@apollo/client'
 import { Query, QueryTokenBalanceArgs, Token } from 'types/graphql'
 import { useWallet } from '../contexts/wallet'
 
@@ -81,6 +81,13 @@ export default function Swap() {
     }
   })
 
+  const [updateBalance] = useLazyQuery<Query, QueryTokenBalanceArgs>(TOKEN_BALANCE, {
+    variables: {
+      tokenId: selectedToken?.id,
+      address: connectedWallet?.address
+    }
+  })
+
   return (
     <Container>
       <LayoutBox>
@@ -93,6 +100,7 @@ export default function Swap() {
           connect={() => connect()}
           metamaskStatus={status}
           selectToken={(token) => setSelectedToken(token)}
+          updateBalance={updateBalance}
         />
       </LayoutBox>
     </Container>

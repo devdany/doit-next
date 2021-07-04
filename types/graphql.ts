@@ -49,7 +49,8 @@ export type SwapHistory = {
 };
 
 export enum SwapResult {
-  Pending = 'PENDING',
+  Burnning = 'BURNNING',
+  Mintting = 'MINTTING',
   Fail = 'FAIL',
   Success = 'SUCCESS'
 }
@@ -99,6 +100,7 @@ export type QuerySwapHistoriesArgs = {
 export type Mutation = {
   __typename?: 'Mutation';
   connectWallet: UserWallet;
+  registerBrunTransactionChecker: Scalars['Boolean'];
   swapToken: SwapHistory;
 };
 
@@ -108,9 +110,28 @@ export type MutationConnectWalletArgs = {
 };
 
 
+export type MutationRegisterBrunTransactionCheckerArgs = {
+  transactionId: Scalars['String'];
+  mintTokenAddress: Scalars['String'];
+  tokenAddress: Scalars['String'];
+  userWalletAddress: Scalars['String'];
+};
+
+
 export type MutationSwapTokenArgs = {
+  transactionId: Scalars['String'];
   address: Scalars['String'];
   amount: Scalars['Float'];
   toTokenId: Scalars['Float'];
   fromTokenId: Scalars['Float'];
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  swapHistoryList: SwapHistory;
+};
+
+
+export type SubscriptionSwapHistoryListArgs = {
+  userWalletId: Scalars['Float'];
 };

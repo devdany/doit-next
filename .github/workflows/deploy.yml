@@ -8,7 +8,7 @@ on:
 env:
   GRAPHQL_URL: 'https://api.doitswap.com/graphql'
   GRAPHQL_WEBSOCKET_URL: 'wss://api.doitswap.com/subscriptions'
-
+  ETHEREUM_PROVIDER_URL: 'https://ropsten.infura.io/v3/5affaa24831b47f38f46a886dca5fb2f'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,7 +28,7 @@ jobs:
        
       - uses: borales/actions-yarn@v2.3.0
         with:
-          variableNames: GRAPHQL_URL,GRAPHQL_WEBSOCKET_URL
+          variableNames: GRAPHQL_URL,GRAPHQL_WEBSOCKET_URL,ETHEREUM_PROVIDER_URL
           cmd: build
       
       - name: Deploy react to S3

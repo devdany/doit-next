@@ -10,7 +10,10 @@ import theme from 'theme';
 import { Token, UserWallet } from 'types/graphql'
 import { HashLoader } from 'react-spinners';
 import { gql, useMutation } from '@apollo/client';
-import { Mutation, MutationSwapTokenArgs } from 'types/graphql'
+import { Mutation, MutationRegisterBrunTransactionCheckerArgs } from 'types/graphql'
+import Web3 from 'web3';
+import bigint from 'big-integer';
+// const bigint = require('big-integer');
 
 const Container = styled.div`
   display: flex;
@@ -190,39 +193,18 @@ type Props = {
   tokenLoading: boolean
   connect: () => void
   selectToken: (token: Token) => void
+  updateBalance: () => void
 }
 
 const tokensToOptions = (tokens: Token[]): Option[] => tokens.map((token) => ({ label: token.name, value: token.name }))
 
-const SWAP_TOKEN = gql`
-  mutation swapToken($address: String!, $amount: Float!, $toTokenId: Float!, $fromTokenId: Float!) {
-    swapToken(address: $address, amount: $amount, toTokenId: $toTokenId, fromTokenId: $fromTokenId) {
-      id
-      transaction
-      amount
-      createdAt
-      from {
-        id
-        name
-        address
-        abi
-        decimal
-        network
-      }
-      to {
-        id
-        name
-        address
-        abi
-        decimal
-        network
-      }
-      result
-    }
+const REGISTER_BURN_TRANSACTION_CHECKER = gql`
+  mutation registerBrunTransactionChecker($tokenAddress: String!, $userWalletAddress: String!, $mintTokenAddress: String!, $transactionId: String!) {
+    registerBrunTransactionChecker(tokenAddress: $tokenAddress, userWalletAddress: $userWalletAddress, mintTokenAddress: $mintTokenAddress, transactionId: $transactionId)
   }
 `;
 
-export default function SwapBox({ balance, connect, tokenLoading, tokens, metamaskStatus, selectToken, userWallet }: Props) {
+export default function SwapBox({ balance, connect, tokenLoading, tokens, metamaskStatus, selectToken, userWallet, updateBalance }: Props) {
   if (!tokens) {
     return (
       <SpinnerContainer>
@@ -234,44 +216,8 @@ export default function SwapBox({ balance, connect, tokenLoading, tokens, metama
   const tokenOptions = tokensToOptions(tokens);
   const [asset, setAsset] = useState<Option>({ label: '', value: '' });
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
-  const [swapToken] = useMutation<Mutation, MutationSwapTokenArgs>(SWAP_TOKEN, {
-    update(cache, { data: { swapToken } }) {
-      cache.modify({
-        fields: {
-          swapHistories(exsistingHistories = []) {
-            const histories = cache.writeFragment({
-              data: swapToken,
-              fragment: gql`
-                fragment NewHistory on History {
-                  id
-                  transaction
-                  amount
-                  createdAt
-                  from {
-                    id
-                    name
-                    address
-                    abi
-                    decimal
-                    network
-                  }
-                  to {
-                    id
-                    name
-                    address
-                    abi
-                    decimal
-                    network
-                  }
-                  result
-                }
-              `,
-            });
-            return [histories, ...exsistingHistories];
-          },
-        },
-      });
-    },
+  const [regiterBurnTransactionChecker] = useMutation<Mutation, MutationRegisterBrunTransactionCheckerArgs>(REGISTER_BURN_TRANSACTION_CHECKER, {
+    
   })
 
   useEffect(() => {
@@ -315,19 +261,38 @@ export default function SwapBox({ balance, connect, tokenLoading, tokens, metama
   }
 
   const isPossibleSwap = () => selectedToken && selectedToken.swapables && selectedToken.swapables.length > 0 && metamaskStatus === 'connected' && userWallet ? true: false
-  const handleClickSwap = () => {
+  const handleClickSwap = async () => {
     if (isPossibleSwap()) {
-      swapToken({
-        variables: {
-          fromTokenId: selectedToken.id,
-          toTokenId: selectedToken.swapables[0].id,
-          address: userWallet.address,
-          amount: swapAmount
-        }
-      })
-        .then(() => {
-          alert('Swap is pending..')
-        })
+      // TODO: burnging transaction send
+      if (typeof window !== 'undefined') {
+        const anyWindow = window as any
+        const web3 = new Web3(anyWindow.web3.currentProvider);
+        const tokenInstance = new web3.eth.Contract(JSON.parse(selectedToken.abi as any), selectedToken.address);
+        const decimalAmount = bigint(10).pow(selectedToken.decimal).multiply(swapAmount).toString()
+
+        tokenInstance.methods.burn(decimalAmount).send({ from: userWallet.address })
+          .on('transactionHash', (hash: string) => {
+            // 보낸거
+            regiterBurnTransactionChecker({
+              variables: {
+                tokenAddress: selectedToken.address,
+                userWalletAddress: userWallet.address,
+                mintTokenAddress: selectedToken.swapables[0].address,
+                transactionId: hash
+              }
+            })
+              .then((result) => {
+                if (result.data?.registerBrunTransactionChecker) {
+                  alert('Successfully swap process is started. Checking transaction..')
+                } else {
+                  alert('Fail swap request. please contact to us.')
+                }
+              })
+          })
+          .on('receipt', () => {
+            updateBalance();
+          })
+      }
     }
   }
 

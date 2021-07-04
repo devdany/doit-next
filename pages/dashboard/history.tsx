@@ -263,7 +263,7 @@ export default function HistoryPage() {
         <Divider />
         <HistoryTitleBox>
           <Label>Swap History</Label>
-          <AdditionalText>
+          <AdditionalText onClick={() => { window.location.href = `https://testnet.bscscan.com/token/${selectedToken?.address}` }}>
             <Icon style={{ marginRight: '4px' }} src={External} />
             View on BscScan
           </AdditionalText>
