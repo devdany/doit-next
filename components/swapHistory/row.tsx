@@ -167,7 +167,9 @@ export default function SwapHistoryRow({ history }: Props) {
   const [expanded, setExpanded] = useState<number | false>(0);
 
   const handleChange = (panelId: number) => (_: React.ChangeEvent<{}>, newExpanded: boolean) => {
-    setExpanded(newExpanded ? panelId : false);
+    if (history.result !== SwapResult.Checking) {
+      setExpanded(newExpanded ? panelId : false);
+    }
   };
 
   let status: 'pending' | 'success' | 'fail' = 'pending'
@@ -178,9 +180,11 @@ export default function SwapHistoryRow({ history }: Props) {
     status = 'fail'
   }
 
+  
+
   return (
     <Accordion square expanded={expanded === history.id} onChange={handleChange(history.id)}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1d-content" id="panel1d-header">
+      <AccordionSummary expandIcon={history.result !== SwapResult.Checking ? <ExpandMoreIcon /> : undefined} aria-controls="panel1d-content" id="panel1d-header">
         <Container>
           <TitleText>
             {history.from.name}
@@ -191,7 +195,7 @@ export default function SwapHistoryRow({ history }: Props) {
             </StatusBadge>
           </TitleText>
           <TitleText style={{ fontWeight: 400 }}>
-            {`+ ${history.amount} ${typeof window !== 'undefined' && window.innerWidth > 1023 ? history.to.name : ''}`}
+            {history.result === SwapResult.Checking ? 'Checking..' : `+ ${history.amount} ${typeof window !== 'undefined' && window.innerWidth > 1023 ? history.to.name : ''}`}
           </TitleText>
         </Container>
       </AccordionSummary>

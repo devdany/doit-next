@@ -11,6 +11,7 @@ import { useWallet } from 'contexts/wallet';
 import { useQuery, gql } from '@apollo/client';
 import { Query, QuerySwapHistoriesArgs, Token, QueryTokenBalanceArgs } from 'types/graphql'
 import { useMetaMask } from 'metamask-react';
+import { Refresh } from '@material-ui/icons'
 
 import 'react-dropdown/style.css';
 
@@ -96,6 +97,8 @@ const Label = styled.div`
   color: ${theme.color.sub};
   font-weight: 500;
   font-size: 18px;
+  display: flex;
+  align-items: center;
 `;
 
 const BalanceText = styled.div`
@@ -199,11 +202,12 @@ export default function HistoryPage() {
   const [ selectedToken, setSelectedToken ] = useState<Token | null>(null)
   const { connectedWallet } = useWallet()
   const isAbleToBeSwapedToken = useQuery<Query>(IS_ABLE_TO_BE_SWAPED_TOKENS)
-  const { data, loading } = useQuery<Query, QuerySwapHistoriesArgs>(HISTORIES, {
+  const { data, loading, fetchMore } = useQuery<Query, QuerySwapHistoriesArgs>(HISTORIES, {
     variables: {
       userWalletId: connectedWallet?.id
     },
-    skip: connectedWallet === null
+    skip: connectedWallet === null,
+    fetchPolicy: 'cache-and-network'
   })
 
   const tokenBalanceResult = useQuery<Query, QueryTokenBalanceArgs>(TOKEN_BALANCE, {
@@ -241,6 +245,16 @@ export default function HistoryPage() {
     }
   }, [isAbleToBeSwapedToken])
 
+  const refrestStyle: any = {
+    marginLeft: '8px',
+    cursor: 'pointer'
+  }
+
+  if (loading) {
+    refrestStyle.color = '#ddd';
+    refrestStyle.cursor = 'none'
+  }
+
   return (
     <Container>
       <Header />
@@ -262,7 +276,7 @@ export default function HistoryPage() {
         </BinanceBalanceBox>
         <Divider />
         <HistoryTitleBox>
-          <Label>Swap History</Label>
+          <Label>Swap History <Refresh onClick={() => !loading && fetchMore({ variables: { userWalletId: connectedWallet?.id } })} style={refrestStyle} /></Label>
           <AdditionalText onClick={() => { window.open(`https://testnet.bscscan.com/token/${selectedToken?.address}`, '_blank') }}>
             <Icon style={{ marginRight: '4px' }} src={External} />
             View on BscScan

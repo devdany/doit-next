@@ -49,6 +49,7 @@ export type SwapHistory = {
 };
 
 export enum SwapResult {
+  Checking = 'CHECKING',
   Burnning = 'BURNNING',
   Mintting = 'MINTTING',
   Fail = 'FAIL',
