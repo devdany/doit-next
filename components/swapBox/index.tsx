@@ -13,7 +13,7 @@ import { gql, useMutation } from '@apollo/client';
 import { Mutation, MutationRegisterBrunTransactionCheckerArgs } from 'types/graphql'
 import Web3 from 'web3';
 import bigint from 'big-integer';
-// const bigint = require('big-integer');
+import { useRouter } from 'next/router'
 
 const Container = styled.div`
   display: flex;
@@ -216,9 +216,8 @@ export default function SwapBox({ balance, connect, tokenLoading, tokens, metama
   const tokenOptions = tokensToOptions(tokens);
   const [asset, setAsset] = useState<Option>({ label: '', value: '' });
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
-  const [regiterBurnTransactionChecker] = useMutation<Mutation, MutationRegisterBrunTransactionCheckerArgs>(REGISTER_BURN_TRANSACTION_CHECKER, {
-    
-  })
+  const [regiterBurnTransactionChecker] = useMutation<Mutation, MutationRegisterBrunTransactionCheckerArgs>(REGISTER_BURN_TRANSACTION_CHECKER)
+  const router = useRouter();
 
   useEffect(() => {
     if (tokens.length > 0) {
@@ -283,7 +282,7 @@ export default function SwapBox({ balance, connect, tokenLoading, tokens, metama
             })
               .then((result) => {
                 if (result.data?.registerBrunTransactionChecker) {
-                  alert('Successfully swap process is started. Checking transaction..')
+                  router.push('/dashboard/history');
                 } else {
                   alert('Fail swap request. please contact to us.')
                 }

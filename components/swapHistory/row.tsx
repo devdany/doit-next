@@ -149,6 +149,19 @@ const DetailValue = styled.div`
   }
 `;
 
+const DetailLinkValue = styled.div`
+  font-size: 14px;
+  line-height: 22px;
+  color: #4C74B9;
+  text-decoration: underline;
+  cursor: pointer;
+
+  @media (max-width: 1024px) {
+    font-size: 12px;
+    line-height: 16px;
+  }
+`;
+
 
 export default function SwapHistoryRow({ history }: Props) {
   const [expanded, setExpanded] = useState<number | false>(0);
@@ -189,7 +202,7 @@ export default function SwapHistoryRow({ history }: Props) {
             <DetailTitle style={{ marginTop: '8px' }} >Swap Date</DetailTitle>
           </DetailTitleBox>
           <DetailValueBox>
-            <DetailValue>{makeShortAddress(history.transaction)}</DetailValue>
+            <DetailLinkValue onClick={() => window.open(`https://testnet.bscscan.com/tx/${history.transaction}`, '_blank')} >{makeShortAddress(history.transaction)}</DetailLinkValue>
             <DetailValue style={{ marginTop: '8px' }}>{dateToFormatted(new Date(history.createdAt))}</DetailValue>
           </DetailValueBox>
         </DetailContainer>
