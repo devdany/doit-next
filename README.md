@@ -1,42 +1,5 @@
-### Goodoc React Template
+### Doit swap 프론트엔드
 
-## 구성
+## DOIT ERC-20 토큰을 BSC체인 토큰으로 Swap 할 수 있습니다.
 
-* Next
-
-* Atomic Design
-
-* React
-
-## 환경 설정 방법
-
-1. Project Clone
-```
-git clone https://github.com/goodoc/goodoc-fe-template.git
-```
-
-2. Add dependency
-```
-yarn
-# or
-npm install
-```
-
-3. Run Project
-```
-npm run dev
-# or
-yarn dev
-```
-
-* 루트경로에 .env 파일을 만들어 환경변수를 정의해 주세요.
-```
-# 이건 Apollo 쿼리 테스트를 위해 샘플 GQL URL이에요.
-API_BASE_URL=https://graphql-staging.smartclinic.me
-```
-
-* GraphQL Type gen
-/codegen.yml 파일에 있는 schema 경로를 사용하시는 GraphQL API 경로로 수정해주세요.
-```
-yarn typegen
-```
+## Metamask 크롬 플러그인 지갑이 설치되어 있어야 합니다.
