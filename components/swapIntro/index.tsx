@@ -59,7 +59,7 @@ export default function SwapIntro() {
         Start Convert ERC-20 to BEP-20
       </IntroContent>
       <LinkText onClick={() => router.push('/dashboard')} style={{ marginTop: '36px' }}>DashBoard</LinkText>
-      <LinkText>UserGuide</LinkText>
+      <LinkText onClick={() => window.open('https://www.notion.so/DoITSwap-UserGuide-1c821b72a4fe401da3b21d9747dc24ce', '_blank')}>UserGuide</LinkText>
       <ConinPeopleImage src={CoinPeople} />
     </IntroBox>
   )
