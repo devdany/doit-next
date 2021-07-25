@@ -4,14 +4,16 @@ on:
   push:
     branches:
       - main
-
-env:
-  GRAPHQL_URL: 'https://api.doitswap.com/graphql'
-  GRAPHQL_WEBSOCKET_URL: 'wss://api.doitswap.com/subscriptions'
-  ETHEREUM_PROVIDER_URL: 'https://ropsten.infura.io/v3/5affaa24831b47f38f46a886dca5fb2f'
+      - production
+  
 jobs:
-  build:
+  development:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    env:
+      GRAPHQL_URL: 'https://api.doitswap.com/graphql'
+      GRAPHQL_WEBSOCKET_URL: 'wss://api.doitswap.com/subscriptions'
+      ETHEREUM_PROVIDER_URL: 'https://ropsten.infura.io/v3/5affaa24831b47f38f46a886dca5fb2f'
 
     steps:
       - name: checkout
@@ -37,6 +39,42 @@ jobs:
           args: --acl public-read --delete
         env:
           AWS_S3_BUCKET: doitswap.com
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+          SOURCE_DIR: 'out'
+  production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/production'
+    env:
+      GRAPHQL_URL: 'https://api.defiswap.tech/graphql'
+      GRAPHQL_WEBSOCKET_URL: 'wss://api.defiswap.tech/subscriptions'
+      ETHEREUM_PROVIDER_URL: 'https://ropsten.infura.io/v3/5affaa24831b47f38f46a886dca5fb2f'
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: install
+       
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          variableNames: GRAPHQL_URL,GRAPHQL_WEBSOCKET_URL,ETHEREUM_PROVIDER_URL
+          cmd: build
+      
+      - name: Deploy react to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --delete
+        env:
+          AWS_S3_BUCKET: defiswap.tech
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1

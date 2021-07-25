@@ -29,7 +29,7 @@ export default function Header() {
   return (
     <Container>
       <LogoBox onClick={() => router.push('/')}>
-        DOIT SWAP
+        DEFI SWAP
       </LogoBox>
     </Container>
   )

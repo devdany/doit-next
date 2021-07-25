@@ -51,7 +51,7 @@ export default function SwapIntro() {
   const router = useRouter();
   return (
     <IntroBox>
-      <IntroTitle>DOIT SWAP</IntroTitle>
+      <IntroTitle>DEFI SWAP</IntroTitle>
       <IntroContent>
         The safe, fast and most secure way to bring Ethereum-chain assets to Binance chains.
       </IntroContent>
@@ -59,7 +59,7 @@ export default function SwapIntro() {
         Start Convert ERC-20 to BEP-20
       </IntroContent>
       <LinkText onClick={() => router.push('/dashboard')} style={{ marginTop: '36px' }}>DashBoard</LinkText>
-      <LinkText onClick={() => window.open('https://www.notion.so/DoITSwap-UserGuide-1c821b72a4fe401da3b21d9747dc24ce', '_blank')}>UserGuide</LinkText>
+      <LinkText onClick={() => window.open('https://earthy-shift-88d.notion.site/DOIT-SWAP-UserGuide-9d6eac769f0b4dd89017f75a52f75af4', '_blank')}>UserGuide</LinkText>
       <ConinPeopleImage src={CoinPeople} />
     </IntroBox>
   )
