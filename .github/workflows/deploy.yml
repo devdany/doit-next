@@ -12,7 +12,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     env:
       GRAPHQL_URL: 'https://api.doitswap.com/graphql'
-      GRAPHQL_WEBSOCKET_URL: 'wss://api.doitswap.com/graphql/subscriptions'
+      GRAPHQL_WEBSOCKET_URL: 'wss://api.doitswap.com/graphql'
       ETHEREUM_PROVIDER_URL: 'https://ropsten.infura.io/v3/5affaa24831b47f38f46a886dca5fb2f'
 
     steps:
@@ -48,7 +48,7 @@ jobs:
     if: github.ref == 'refs/heads/production'
     env:
       GRAPHQL_URL: 'https://api.defiswap.tech/graphql'
-      GRAPHQL_WEBSOCKET_URL: 'wss://api.defiswap.tech/graphql/subscriptions'
+      GRAPHQL_WEBSOCKET_URL: 'wss://api.defiswap.tech/graphql'
       ETHEREUM_PROVIDER_URL: 'https://ropsten.infura.io/v3/5affaa24831b47f38f46a886dca5fb2f'
 
     steps:
